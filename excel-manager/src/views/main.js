@@ -1,6 +1,11 @@
 const { dialog } = require("electron").remote;
 var fs = require("fs");
 
+if (typeof require !== "undefined") XLSX = require("xlsx");
+var workbook;
+var originalFilePath;
+var wb = XLSX.utils.book_new();
+
 var holder = document.getElementById("drag-file");
 
 holder.ondragover = () => {
@@ -27,25 +32,20 @@ holder.ondrop = e => {
 };
 
 function readFile(filepath) {
-  fs.readFile(filepath, "utf-8", (err, data) => {
-    if (err) {
-      alert("An error ocurred reading the file :" + err.message);
-      return;
-    }
-    console.log("The file content is : " + data);
-    document.getElementById("progress-bar").style.display = "inline";
-  });
+  workbook = XLSX.readFile(filepath);
+  processFile(workbook);
+
+  document.getElementById("progress-bar").style.display = "inline";
 }
 
 function selectFile() {
-  console.log("select files was clicked");
   dialog.showOpenDialog(fileNames => {
     // fileNames is an array that contains all the selected
     if (fileNames === undefined) {
       console.log("No file selected");
       return;
     }
-
+    originalFilePath = fileNames[0];
     readFile(fileNames[0]);
   });
 
@@ -61,29 +61,37 @@ function selectFile() {
   });*/
 }
 
-function saveFile() {
-  let content = "Some text to save into the file";
+function processFile(file) {
+  var first_sheet_name = workbook.SheetNames[0];
+  var address_of_cell = "A1";
 
-  dialog.showSaveDialog(fileName => {
-    if (fileName === undefined) {
-      console.log("You didn't save the file");
-      return;
-    }
+  /* Get worksheet */
+  var worksheet = workbook.Sheets[first_sheet_name];
 
-    fs.writeFile(fileName + ".txt", content, err => {
-      if (err) {
-        notification(
-          "error",
-          "An error ocurred creating the file " + err.message
-        );
-        return;
-      }
+  /* Find desired cell */
+  var desired_cell = worksheet[address_of_cell];
 
-      notification("success", "The file was saved successfully");
-    });
-  });
+  /* Get the value */
+  var desired_value = desired_cell ? desired_cell.v : undefined;
 
   /*
+  Add a new worksheet to the new bookbook
+  */
+  var new_ws_name = first_sheet_name;
+
+  /* make worksheet */
+
+  var ws_data = [["Hello world"]];
+  var ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+  /* Add the worksheet to the workbook */
+  XLSX.utils.book_append_sheet(wb, ws, new_ws_name);
+
+  /* Once the file is ready, the button is enable to the user to save the new file*/
+  document.getElementById("saveFileButton").disabled = false;
+}
+
+function saveFile() {
   dialog.showOpenDialog(
     {
       title: "Select a folder",
@@ -91,24 +99,22 @@ function saveFile() {
     },
     folderPaths => {
       // folderPaths is an array that contains all the selected paths
-      if (fileNames === undefined) {
+      if (folderPaths === undefined) {
         console.log("No destination folder selected");
         return;
       } else {
-        console.log(folderPaths);
-        fs.writeFile(fileName, content, err => {
-          if (err) {
-            notification(
-              error,
-              "An error ocurred creating the file " + err.message
-            );
-            return;
-          }
-          notification(success, "The file was saved successfully");
-        });
+        var name = originalFilePath.substring(
+          originalFilePath.lastIndexOf("\\") + 1,
+          originalFilePath.length - 5
+        );
+
+        XLSX.writeFile(
+          wb,
+          folderPaths[0] + "\\" + name + "-modificado" + ".xlsx"
+        );
       }
     }
-  );*/
+  );
 }
 
 function notification(type, message) {
