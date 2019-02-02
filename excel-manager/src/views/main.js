@@ -74,36 +74,12 @@ function selectFile() {
 }
 
 function processFile(file) {
-  var first_sheet_name = workbook.SheetNames[0];
-  /* Get worksheet */
-  var worksheet = workbook.Sheets[first_sheet_name];
-
-  var address_of_cell = "A2";
-
-  /* Find desired cell */
-  var desired_cell = worksheet[address_of_cell];
-
-  /* Get the value */
-  var desired_value = desired_cell ? desired_cell.v : undefined;
+  var first_sheet_name = file.SheetNames[0];
+  /* Get the input file first worksheet */
+  var worksheet = file.Sheets[first_sheet_name];
 
   /* Create an array of json that will contains the proccesed data */
-  var ws_data = [
-    {
-      A: "Día",
-      B: "Debe",
-      C: "Haber",
-      D: "M",
-      E: "Importe",
-      F: "Total",
-      G: "I",
-      H: "I.V.A.",
-      I: "Leyenda",
-      J: "L",
-      K: "Cotización",
-      L: "Centro",
-      M: "Fecha Vto."
-    }
-  ];
+  var ws_data = [];
 
   /** Test sheet to json */
 
@@ -113,8 +89,6 @@ function processFile(file) {
 
   /* start the iteration */
   for (let r = 0; r < rowNumber; r++) {
-    /** created a json to store the new data */
-    let json = {};
     /** getting the date */
     let celdaDia = "A" + (r + 2);
     let fecha = worksheet[celdaDia];
@@ -131,56 +105,59 @@ function processFile(file) {
     /** getting the "Centro" */
     /** getting the "Fecha Vto." */
     /** ------------------------------------------------- */
-    /** processed percentage */
 
+    /** for each row in the input file, we create a new json who contain the new processed information */
+    let newRow = {
+      Dia: dia,
+      Debe: "Debe row: " + r,
+      Haber: "Haber row:" + r,
+      M: "M row: " + r,
+      Importe: "Importe row: " + r,
+      Total: "Total row: " + r,
+      I: "I row: " + r,
+      "I.V.A.": "I.V.A. row: " + r,
+      Leyenda: "Leyenda row: " + r,
+      L: "L row: " + r,
+      Cotizacion: "Cotizacion row: " + r,
+      Centro: "Centro row: " + r,
+      "Fecha Vto.": "Fecha Vto. row: " + r
+    };
+
+    /** update the worksheet */
+    ws_data.push(newRow);
+
+    /** processed percentage */
     let porcentaje = ((r + 1) / rowNumber) * 100 + "%";
-    console.log(porcentaje);
+    /** update the progress bar */
     document.getElementById("progress-bar-id").innerHTML = porcentaje;
     document.getElementById("progress-bar-id").style.width = porcentaje;
   }
 
+  /** update the color of progress bar to green. This means that all rows of the input file was processed */
   document.getElementById("progress-bar-id").classList.add("bg-success");
 
-  /*
-  for(var R = range.s.r; R <= range.e.r; ++R) {
-    for(var C = range.s.c; C <= range.e.c; ++C) {
-      var cell_address = {c:C, r:R};     
-      var cell_ref = XLSX.utils.encode_cell(cell_address);
-    }
-  }
+  /** transform the array of json into a excel whorksheet */
+  var newJsonSheet = XLSX.utils.json_to_sheet(ws_data, {
+    header: [
+      "Dia",
+      "Debe",
+      "Haber",
+      "M",
+      "Importe",
+      "Total",
+      "I",
+      "I.V.A.",
+      "Leyenda",
+      "L",
+      "Cotizacion",
+      "Centro",
+      "Fecha Vto."
+    ],
+    skipHeader: false
+  });
 
-  var ws = XLSX.utils.json_to_sheet([
-    { A: "S", B: "h", C: "e", D: "e", E: "t", F: "J", G: "S" }
-  ], {header: ["A", "B", "C", "D", "E", "F", "G"], skipHeader: true});
-
-
-  XLSX.utils.sheet_add_json(ws, [
-    { A: 1, B: 2 }, { A: 2, B: 3 }, { A: 3, B: 4 }
-  ], {skipHeader: true, origin: "A2"});
-
-
-  XLSX.utils.sheet_add_json(ws, [
-    { A: 5, B: 6, C: 7 }, { A: 6, B: 7, C: 8 }, { A: 7, B: 8, C: 9 }
-  ], {skipHeader: true, origin: { r: 1, c: 4 }, header: [ "A", "B", "C" ]});
-
-
-  XLSX.utils.sheet_add_json(ws, [
-    { A: 4, B: 5, C: 6, D: 7, E: 8, F: 9, G: 0 }
-  ], {header: ["A", "B", "C", "D", "E", "F", "G"], skipHeader: true, origin: -1});
-
-  */
-
-  /* end of the iteration */
-
-  /* 
-  var ws = XLSX.utils.aoa_to_sheet(ws_data);
-
-  
-  var new_ws_name = first_sheet_name;
-
-  
-  XLSX.utils.book_append_sheet(wb, ws, new_ws_name);
-  */
+  /** append the new worksheet to a workbook we create previusly */
+  XLSX.utils.book_append_sheet(wb, newJsonSheet, first_sheet_name);
 
   /* Once the file is ready, the button is enable to the user to save the new file*/
   document.getElementById("saveFileButton").disabled = false;
