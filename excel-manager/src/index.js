@@ -41,13 +41,6 @@ const templateMenu = [
     label: "File",
     submenu: [
       {
-        label: "Load file",
-        accelerator: process.platform == "darwin" ? "command+L" : "Ctrl+L",
-        click() {
-          loadFile();
-        }
-      },
-      {
         label: "Exit",
         accelerator: process.platform == "darwin" ? "command+Q" : "Ctrl+Q",
         click() {

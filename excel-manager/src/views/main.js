@@ -2,7 +2,6 @@ const { dialog } = require("electron").remote;
 const path = require("path");
 
 if (typeof require !== "undefined") XLSX = require("xlsx");
-var workbook;
 var originalFilePath = [];
 var wb;
 var cantidadFilasProcesadas = 0;
@@ -36,6 +35,7 @@ holder.ondrop = e => {
   totalRows(e.dataTransfer.files, "droped");
 
   for (let f of e.dataTransfer.files) {
+    originalFilePath.push(f.path);
     var name = f.path.substring(f.path.lastIndexOf("\\") + 1, f.path.length);
 
     var node = document.createElement("LI"); // Create a <li> node
@@ -43,6 +43,7 @@ holder.ondrop = e => {
     node.appendChild(textnode); // Append the text to <li>
     document.getElementById("drag-file").appendChild(node);
 
+    console.log("On drag - processFile: ", f.path);
     processFile(f.path);
   }
 
@@ -53,8 +54,6 @@ holder.ondrop = e => {
 };
 
 function selectFile() {
-  document.getElementById("drag-file").innerHTML = "File(s) you selected: ";
-
   dialog.showOpenDialog(
     {
       properties: ["openFile", "multiSelections"]
@@ -64,6 +63,8 @@ function selectFile() {
         console.log("No file selected");
         return;
       }
+
+      document.getElementById("drag-file").innerHTML = "File(s) you selected: ";
       /* show the progress bar when the files was loaded */
       document.getElementById("progress-bar").style.display = "inline";
 
@@ -81,6 +82,7 @@ function selectFile() {
         var textnode = document.createTextNode(name); // Create a text node
         node.appendChild(textnode); // Append the text to <li>
         document.getElementById("drag-file").appendChild(node);
+        console.log("On select - processFile: ", file);
         processFile(file);
       });
       /* Once the file is ready, the button is enable to the user to save the new file*/
@@ -90,6 +92,7 @@ function selectFile() {
 }
 
 function processFile(fileURL) {
+  let porcentaje = 0;
   wb = XLSX.utils.book_new();
 
   workbookToProcess = XLSX.readFile(fileURL);
@@ -100,7 +103,6 @@ function processFile(fileURL) {
     var ws_data = [];
 
     /** Test sheet to json */
-
     var jsonSheet = XLSX.utils.sheet_to_json(worksheet);
 
     const rowNumber = jsonSheet.length;
@@ -108,37 +110,35 @@ function processFile(fileURL) {
     /* start the iteration */
     for (let r = 0; r < rowNumber; r++) {
       /** getting the date */
-      let celdaDia = "A" + (r + 2);
-      let fecha = worksheet[celdaDia];
-      let dia = fecha["w"].split("/")[1];
-      /** getting the "Debe" */
-      /** getting the "Haber" */
-      /** getting the " Moneda" */
-      /** getting the "Importe Total" */
-      /** getting the "Tipo impuesto" */
-      /** getting the "Iva" */
-      /** getting the "Leyenda" */
-      /** getting the "L" */
-      /** getting the "Cotización" */
-      /** getting the "Centro" */
-      /** getting the "Fecha Vto." */
+      let dateCell = "A" + (r + 2);
+      let date = worksheet[dateCell];
+      let day = date["w"];
+      /** getting the "Col1" */
+      /** getting the "Col2" */
+      /** getting the "Col3" */
+      /** getting the "Col4" */
+      /** getting the "Col5" */
+      /** getting the "Col6" */
+      /** getting the "Col7" */
+      /** getting the "Col8" */
+      /** getting the "Col9" */
+      /** getting the "Col10" */
       /** ------------------------------------------------- */
 
       /** for each row in the input file, we create a new json who contain the new processed information */
+
       let newRow = {
-        Dia: dia,
-        Debe: "Debe row: " + r,
-        Haber: "Haber row:" + r,
-        M: "M row: " + r,
-        Importe: "Importe row: " + r,
-        Total: "Total row: " + r,
-        I: "I row: " + r,
-        "I.V.A.": "I.V.A. row: " + r,
-        Leyenda: "Leyenda row: " + r,
-        L: "L row: " + r,
-        Cotizacion: "Cotizacion row: " + r,
-        Centro: "Centro row: " + r,
-        "Fecha Vto.": "Fecha Vto. row: " + r
+        Date: day,
+        Col1: "NewCol1Val: " + r,
+        Col2: "NewCol2Val" + r,
+        Col3: "NewCol3Val" + r,
+        Col4: "NewCol4Val" + r,
+        Col5: "NewCol5Val" + r,
+        Col6: "NewCol6Val" + r,
+        Col7: "NewCol7Val" + r,
+        Col8: "NewCol8Val" + r,
+        Col9: "NewCol9Val" + r,
+        Col10: "NewCol10Val" + r
       };
 
       /** update the worksheet */
@@ -146,32 +146,26 @@ function processFile(fileURL) {
 
       cantidadFilasProcesadas += 1;
       /** processed percentage */
-      let porcentaje =
-        (cantidadFilasProcesadas / cantidadTotalFilas) * 100 + "%";
+      porcentaje = (cantidadFilasProcesadas / cantidadTotalFilas) * 100 + "%";
       /** update the progress bar */
       document.getElementById("progress-bar-id").innerHTML = porcentaje;
       document.getElementById("progress-bar-id").style.width = porcentaje;
     }
 
-    /** update the color of progress bar to green. This means that all rows of the input file was processed */
-    document.getElementById("progress-bar-id").classList.add("bg-success");
-
     /** transform the array of json into a excel whorksheet */
     var newJsonSheet = XLSX.utils.json_to_sheet(ws_data, {
       header: [
-        "Dia",
-        "Debe",
-        "Haber",
-        "M",
-        "Importe",
-        "Total",
-        "I",
-        "I.V.A.",
-        "Leyenda",
-        "L",
-        "Cotizacion",
-        "Centro",
-        "Fecha Vto."
+        "Date",
+        "Col1",
+        "Col2",
+        "Col3",
+        "Col4",
+        "Col5",
+        "Col6",
+        "Col7",
+        "Col8",
+        "Col9",
+        "Col10"
       ],
       skipHeader: false
     });
@@ -179,6 +173,9 @@ function processFile(fileURL) {
     /** append the new worksheet to a workbook we create previusly */
     XLSX.utils.book_append_sheet(wb, newJsonSheet, sheet);
   });
+
+  /** update the color of progress bar to green. This means that all rows of the input file was processed */
+  document.getElementById("progress-bar-id").classList.add("bg-success");
 
   workbooksProcessed.push(wb);
 }
@@ -196,6 +193,9 @@ function saveFile() {
         return;
       } else {
         workbooksProcessed.forEach((workbook, index) => {
+          console.log("originalFilePath: ", originalFilePath);
+          console.log("originalFilePath index: ", index);
+
           var name = originalFilePath[index].substring(
             originalFilePath[index].lastIndexOf("\\") + 1,
             originalFilePath[index].length - 5
@@ -211,6 +211,15 @@ function saveFile() {
           "success",
           "Su(s) archivo(s) modificado(s) fue guardado(s) correctamente"
         );
+
+        document.getElementById("drag-file").innerHTML = `
+          <img src="../../assets/icons/win/test5.png" alt="" />
+          <span class="text-center">
+            <a href="#" onclick="selectFile()">Elija un archivo</a> o
+            arrastrelo aquí.
+          </span>
+          `;
+        document.getElementById("progress-bar").style.display = "none";
       }
     }
   );
@@ -242,7 +251,7 @@ function notification(type, message) {
         message: message,
         title: "Success",
         sound: true,
-        icon: path.join(__dirname, "../../assets/icons/win/success12.png"),
+        icon: path.join(__dirname, "../../assets/icons/win/success.png"),
         wait: true,
         timeout: 5,
         closeLabel: void 0

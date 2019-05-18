@@ -4,11 +4,6 @@
   flex-direction: column;
 }
 
-/* 
-border: 2px dashed black;
-align-items: center;
-*/
-
 #drag-file {
   background: rgb(200, 218, 228);
   height: 200px;
